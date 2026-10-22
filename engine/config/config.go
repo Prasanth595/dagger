@@ -39,6 +39,39 @@ type Config struct {
 	// Registries configures custom registry mirrors, root CAs, and
 	// insecure/HTTP access.
 	Registries map[string]RegistryConfig `json:"registries,omitempty"`
+
+	// Shutdown configures how the engine stops.
+	Shutdown ShutdownConfig `json:"shutdown,omitempty"`
+
+	// CacheVolumes configures where the engine keeps cache volumes.
+	CacheVolumes CacheVolumesConfig `json:"cacheVolumes,omitempty"`
+}
+
+type CacheVolumesConfig struct {
+	// Dir, when set, keeps every cache volume as a plain directory under this
+	// absolute path, apart from the engine's snapshots, instead of as a
+	// snapshot. Another engine given the same directory later reuses its
+	// volumes. One engine uses the directory at a time: an engine that finds
+	// it in use keeps cache volumes as snapshots. It must not be inside the
+	// engine's worker state directory.
+	Dir string `json:"dir,omitempty"`
+
+	// KeepDuration keeps volumes used more recently than this from garbage
+	// collection.
+	KeepDuration Duration `json:"keepDuration,omitempty"`
+
+	// GCSpace bounds the directory's disk use. Unset values default from the
+	// directory's own filesystem, as the engine's defaults do for its state.
+	GCSpace
+}
+
+type ShutdownConfig struct {
+	// GracefulStopTimeout bounds the engine's whole stop, from the first
+	// SIGTERM or SIGINT to process exit. The final telemetry flushes get what
+	// remains of it, at most 30s each. Set it below the grace period of
+	// whatever supervises the engine, so that the engine exits on its own
+	// rather than being killed. Defaults to 5m; when set, it must be positive.
+	GracefulStopTimeout *Duration `json:"gracefulStopTimeout,omitempty"`
 }
 
 type TelemetryConfig struct {
